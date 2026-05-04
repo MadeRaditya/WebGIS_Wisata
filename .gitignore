@@ -1,0 +1,37 @@
+# CodeIgniter 4 Git Ignore File
+# --------------------------------------------------------------------
+
+# User-specific files
+.env
+.phpunit.result.cache
+phpunit.xml
+
+# Writable directory
+# We ignore everything in writable, but keep the directory structure
+/writable/*
+!/writable/.gitkeep
+!/writable/index.html
+
+# Dependencies
+/vendor/
+/composer.lock
+
+# Public Assets
+/public/assets/uploads/*
+!/public/assets/uploads/.gitkeep
+
+# System & IDE files
+.idea/
+.vscode/
+*.swp
+*.log
+Thumbs.db
+.DS_Store
+
+# Temporary / Scratch Files
+test_supabase.php
+/database_setup.sql
+
+# --------------------------------------------------------------------
+# End of Git Ignore
+# --------------------------------------------------------------------
