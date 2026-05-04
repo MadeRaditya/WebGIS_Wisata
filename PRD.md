@@ -1,36 +1,40 @@
 # 📄 Product Requirements Document (PRD)
+
 ## Aplikasi WebGIS Wisata Berbasis CodeIgniter 4
 
-| Informasi | Detail |
-|-----------|--------|
-| **Nama Proyek** | WebGIS Wisata |
-| **Versi Dokumen** | 1.0 |
-| **Tanggal** | 2026-05-04 |
-| **Tech Stack** | CodeIgniter 4, MySQL 8+, PHP 8.1+, Leaflet.js, OpenStreetMap, HTML5/CSS3/JS |
-| **Arsitektur** | MVC + RESTful API |
-| **Status** | Draft / Siap Implementasi |
+| Informasi         | Detail                                                                      |
+| ----------------- | --------------------------------------------------------------------------- |
+| **Nama Proyek**   | WebGIS Wisata                                                               |
+| **Versi Dokumen** | 1.0                                                                         |
+| **Tanggal**       | 2026-05-04                                                                  |
+| **Tech Stack**    | CodeIgniter 4, supabase, PHP 8.1+, Leaflet.js, OpenStreetMap, HTML5/CSS3/JS |
+| **Arsitektur**    | MVC + RESTful API                                                           |
+| **Status**        | Draft / Siap Implementasi                                                   |
 
 ---
 
 ## 📖 1. Ringkasan Produk
+
 Aplikasi web berbasis GIS yang menyajikan informasi destinasi wisata secara interaktif. Pengguna dapat menjelajahi peta, melihat detail wisata, memfilter berdasarkan kategori & jarak, serta mendapatkan rekomendasi 5+ destinasi terdekat secara otomatis menggunakan geolocation browser dan perhitungan jarak geografis.
 
 ---
 
 ## 🛠 2. Tech Stack & Prinsip Arsitektur
-| Komponen | Teknologi |
-|----------|-----------|
-| **Framework Backend** | CodeIgniter 4 (PHP 8.1+) |
-| **Database** | MySQL 8.0+ (InnoDB) |
-| **Frontend** | HTML5, CSS3, Vanilla JS, Bootstrap 5 (opsional) |
-| **Peta & GIS** | Leaflet.js + OpenStreetMap Tile Server |
-| **Geolocation** | HTML5 Geolocation API (`navigator.geolocation`) |
-| **Arsitektur** | Model-View-Controller, RESTful Routing, Service-Repository Pattern (opsional) |
-| **Keamanan** | CSRF Protection, Input Validation, Prepared Statements, HTTPS Ready |
+
+| Komponen              | Teknologi                                                                     |
+| --------------------- | ----------------------------------------------------------------------------- |
+| **Framework Backend** | CodeIgniter 4 (PHP 8.1+)                                                      |
+| **Database**          | supabase                                                                      |
+| **Frontend**          | HTML5, CSS3, Vanilla JS, Bootstrap 5 (opsional)                               |
+| **Peta & GIS**        | Leaflet.js + OpenStreetMap Tile Server                                        |
+| **Geolocation**       | HTML5 Geolocation API (`navigator.geolocation`)                               |
+| **Arsitektur**        | Model-View-Controller, RESTful Routing, Service-Repository Pattern (opsional) |
+| **Keamanan**          | CSRF Protection, Input Validation, Prepared Statements, HTTPS Ready           |
 
 ---
 
 ## 📁 3. Struktur Project (CodeIgniter 4)
+
 ```
 webgis-wisata/
 ├── app/
@@ -73,6 +77,7 @@ webgis-wisata/
 ## 🗃 4. Desain Database & Sample Data
 
 ### 4.1 Skema Tabel
+
 ```sql
 CREATE TABLE kategori (
   id INT AUTO_INCREMENT PRIMARY KEY,
@@ -105,6 +110,7 @@ CREATE TABLE galeri (
 ```
 
 ### 4.2 Sample Data
+
 ```sql
 INSERT INTO kategori (id, nama, slug) VALUES
 (1, 'Pantai', 'pantai'), (2, 'Gunung', 'gunung'), (3, 'Budaya', 'budaya'), (4, 'Air Terjun', 'air-terjun');
@@ -127,20 +133,21 @@ INSERT INTO galeri (wisata_id, url_gambar, caption) VALUES
 
 ## 🔀 5. Controller-Model-View Breakdown
 
-| Komponen | Tanggung Jawab |
-|----------|----------------|
-| `WisataController` | Menampilkan halaman `index`, `detail`, `galeri`. Memanggil model untuk data awal. |
-| `ApiController` | Menangani permintaan AJAX/REST. Endpoint: `/api/wisata`, `/api/rekomendasi`, `/api/galeri`. |
-| `WisataModel` | Extends `CI4 Model`. Method: `getAll()`, `getById()`, `getByKategori()`, `getNearest()`, `filterByDistance()`. |
-| `KategoriModel` | CRUD kategori, mapping slug ke ID. |
-| `GaleriModel` | Query foto berdasarkan `wisata_id`. |
-| `Views/wisata/index.php` | Layout utama: sidebar filter, daftar card, container peta. |
-| `Views/wisata/detail.php` | Info lengkap, peta mini, galeri carousel. |
-| `Views/layouts/main.php` | Template global, load CDN Leaflet/Bootstrap, header/footer. |
+| Komponen                  | Tanggung Jawab                                                                                                 |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `WisataController`        | Menampilkan halaman `index`, `detail`, `galeri`. Memanggil model untuk data awal.                              |
+| `ApiController`           | Menangani permintaan AJAX/REST. Endpoint: `/api/wisata`, `/api/rekomendasi`, `/api/galeri`.                    |
+| `WisataModel`             | Extends `CI4 Model`. Method: `getAll()`, `getById()`, `getByKategori()`, `getNearest()`, `filterByDistance()`. |
+| `KategoriModel`           | CRUD kategori, mapping slug ke ID.                                                                             |
+| `GaleriModel`             | Query foto berdasarkan `wisata_id`.                                                                            |
+| `Views/wisata/index.php`  | Layout utama: sidebar filter, daftar card, container peta.                                                     |
+| `Views/wisata/detail.php` | Info lengkap, peta mini, galeri carousel.                                                                      |
+| `Views/layouts/main.php`  | Template global, load CDN Leaflet/Bootstrap, header/footer.                                                    |
 
 ---
 
 ## 🌐 6. RESTful Routing (`app/Config/Routes.php`)
+
 ```php
 $routes->get('/', 'WisataController::index');
 $routes->get('wisata/(:num)', 'WisataController::detail/$1');
@@ -160,6 +167,7 @@ $routes->group('api', ['namespace' => 'App\Controllers'], function($routes) {
 ## 📐 7. Fungsi Perhitungan Jarak (Haversine Formula)
 
 ### 7.1 PHP Helper (`app/Libraries/GeoHelper.php`)
+
 ```php
 namespace App\Libraries;
 
@@ -171,106 +179,91 @@ class GeoHelper {
         $earthRadius = 6371; // km
         $dLat = deg2rad($lat2 - $lat1);
         $dLon = deg2rad($lon2 - $lon1);
-        
+
         $a = sin($dLat / 2) ** 2 +
              cos(deg2rad($lat1)) * cos(deg2rad($lat2)) *
              sin($dLon / 2) ** 2;
-             
+
         $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
         return $earthRadius * $c;
     }
 }
 ```
 
-### 7.2 Query MySQL untuk Sorting & Filtering (Rekomendasi Server-Side)
-```php
-// app/Models/WisataModel.php
-public function getNearest(float $userLat, float $userLon, int $limit = 5, float $maxDistance = 50) {
-    $sql = "SELECT w.*, k.nama as kategori_nama,
-            (6371 * ACOS(
-                GREATEST(-1, LEAST(1,
-                    COS(RADIANS(?)) * COS(RADIANS(w.latitude)) * COS(RADIANS(w.longitude) - RADIANS(?)) +
-                    SIN(RADIANS(?)) * SIN(RADIANS(w.latitude))
-                ))
-            )) AS distance_km
-            FROM wisata w
-            LEFT JOIN kategori k ON w.kategori_id = k.id
-            HAVING distance_km <= ?
-            ORDER BY distance_km ASC
-            LIMIT ?";
-            
-    return $this->db->query($sql, [$userLat, $userLon, $userLat, $maxDistance, $limit])->getResultArray();
-}
-```
-> 💡 **Catatan:** `GREATEST/LEAST` mencegah error `NaN` pada `ACOS` saat koordinat sangat dekat. Untuk skala kecil (<10km), Euclidean bisa digunakan, namun Haversine direkomendasikan untuk akurasi geografis.
-
----
-
 ## 🗺 8. Integrasi Peta Interaktif (Leaflet + OSM)
 
 ### 8.1 HTML Container (`views/partials/map_container.php`)
+
 ```html
 <div id="map" style="height: 60vh; width: 100%; border-radius: 8px;"></div>
 ```
 
 ### 8.2 JavaScript Logika (`public/assets/js/main.js`)
+
 ```javascript
-document.addEventListener('DOMContentLoaded', () => {
-    const map = L.map('map').setView([-7.5, 110.5], 8); // Default view (Indonesia)
-    
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors',
-        maxZoom: 19
-    }).addTo(map);
+document.addEventListener("DOMContentLoaded", () => {
+  const map = L.map("map").setView([-7.5, 110.5], 8); // Default view (Indonesia)
 
-    let userMarker = null;
-    let wisataMarkers = L.layerGroup().addTo(map);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution: "&copy; OpenStreetMap contributors",
+    maxZoom: 19,
+  }).addTo(map);
 
-    // 1. Dapatkan lokasi pengguna
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(pos => {
-            const { latitude, longitude } = pos.coords;
-            if (userMarker) map.removeLayer(userMarker);
-            userMarker = L.marker([latitude, longitude], { title: 'Lokasi Anda' })
-                .addTo(map)
-                .bindPopup('Anda berada di sini').openPopup();
-            map.setView([latitude, longitude], 10);
+  let userMarker = null;
+  let wisataMarkers = L.layerGroup().addTo(map);
 
-            // 2. Ambil rekomendasi terdekat
-            fetch('/api/rekomendasi', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ lat: latitude, lon: longitude, limit: 5 })
-            })
-            .then(res => res.json())
-            .then(data => renderMarkers(data))
-            .catch(err => console.error('Gagal memuat rekomendasi:', err));
-        }, () => {
-            console.warn('Geolocation ditolak. Menggunakan fallback.');
-            fetch('/api/wisata').then(res => res.json()).then(renderMarkers);
-        });
-    }
+  // 1. Dapatkan lokasi pengguna
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const { latitude, longitude } = pos.coords;
+        if (userMarker) map.removeLayer(userMarker);
+        userMarker = L.marker([latitude, longitude], { title: "Lokasi Anda" })
+          .addTo(map)
+          .bindPopup("Anda berada di sini")
+          .openPopup();
+        map.setView([latitude, longitude], 10);
 
-    // 3. Render Marker
-    window.renderMarkers = function(destinations) {
-        wisataMarkers.clearLayers();
-        destinations.forEach(d => {
-            const marker = L.marker([d.latitude, d.longitude]);
-            marker.bindPopup(`
+        // 2. Ambil rekomendasi terdekat
+        fetch("/api/rekomendasi", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ lat: latitude, lon: longitude, limit: 5 }),
+        })
+          .then((res) => res.json())
+          .then((data) => renderMarkers(data))
+          .catch((err) => console.error("Gagal memuat rekomendasi:", err));
+      },
+      () => {
+        console.warn("Geolocation ditolak. Menggunakan fallback.");
+        fetch("/api/wisata")
+          .then((res) => res.json())
+          .then(renderMarkers);
+      },
+    );
+  }
+
+  // 3. Render Marker
+  window.renderMarkers = function (destinations) {
+    wisataMarkers.clearLayers();
+    destinations.forEach((d) => {
+      const marker = L.marker([d.latitude, d.longitude]);
+      marker.bindPopup(`
                 <strong>${d.nama}</strong><br>
-                ${d.kategori_nama || '-'}<br>
-                Jarak: ${d.distance_km?.toFixed(1) || '-'} km<br>
+                ${d.kategori_nama || "-"}<br>
+                Jarak: ${d.distance_km?.toFixed(1) || "-"} km<br>
                 <a href="/wisata/${d.id}">Lihat Detail</a>
             `);
-            wisataMarkers.addLayer(marker);
-        });
-    };
+      wisataMarkers.addLayer(marker);
+    });
+  };
 });
 ```
 
 ---
 
 ## 🔍 9. Logika Filter (Kategori & Jarak)
+
 ```php
 // ApiController.php
 public function list() {
@@ -293,21 +286,23 @@ public function list() {
 ---
 
 ## 🛡 10. Persyaratan Non-Fungsional
-| Aspek | Spesifikasi |
-|-------|-------------|
-| **Performa** | Index pada `latitude, longitude`. Query spasial di-server. Cache Redis/CI4 Cache untuk data statis. |
-| **Keamanan** | CSRF Token aktif, validasi input (`$this->validate()`), sanitasi URL gambar, HTTPS wajib untuk geolocation. |
-| **Responsif** | Mobile-first design. Peta menyesuaikan viewport. Grid Bootstrap 12 kolom. |
-| **Aksesibilitas** | Alt text pada gambar, kontras warna WCAG AA, navigasi keyboard. |
-| **Skalabilitas** | Pagination pada list > 50 item. Lazy load gambar galeri. |
+
+| Aspek             | Spesifikasi                                                                                                 |
+| ----------------- | ----------------------------------------------------------------------------------------------------------- |
+| **Performa**      | Index pada `latitude, longitude`. Query spasial di-server. Cache Redis/CI4 Cache untuk data statis.         |
+| **Keamanan**      | CSRF Token aktif, validasi input (`$this->validate()`), sanitasi URL gambar, HTTPS wajib untuk geolocation. |
+| **Responsif**     | Mobile-first design. Peta menyesuaikan viewport. Grid Bootstrap 12 kolom.                                   |
+| **Aksesibilitas** | Alt text pada gambar, kontras warna WCAG AA, navigasi keyboard.                                             |
+| **Skalabilitas**  | Pagination pada list > 50 item. Lazy load gambar galeri.                                                    |
 
 ---
 
 ## 🚀 11. Panduan Deployment & Testing
+
 1. **Setup Environment:** `cp env .env`, konfigurasi `database.default.*` di `.env`.
 2. **Database Migration:** Jalankan skema SQL atau gunakan `spark migrate`.
 3. **Routing & Rewrite:** Pastikan `mod_rewrite` (Apache) atau `try_files` (Nginx) aktif.
-4. **Testing:** 
+4. **Testing:**
    - Unit Test: `php spark test`
    - API Test: Postman/Insomnia ke `/api/wisata` & `/api/rekomendasi`
    - Geolocation: Gunakan browser DevTools > Sensors untuk mock lokasi.
@@ -315,6 +310,7 @@ public function list() {
 ---
 
 ## 🔮 12. Roadmap Pengembangan (Fase Berikutnya)
+
 - [ ] Dashboard Admin untuk CRUD wisata & upload galeri drag-and-drop
 - [ ] Sistem review & rating pengguna
 - [ ] Routing/ navigasi terintegrasi (OSRM/GraphHopper)
@@ -322,4 +318,5 @@ public function list() {
 - [ ] PWA Support (Service Worker untuk caching peta offline)
 
 ---
-📝 *Dokumen ini siap digunakan sebagai panduan teknis pengembang front-end, back-end, dan QA. Pastikan semua endpoint diuji dengan payload JSON yang sesuai sebelum integrasi penuh.*
+
+📝 _Dokumen ini siap digunakan sebagai panduan teknis pengembang front-end, back-end, dan QA. Pastikan semua endpoint diuji dengan payload JSON yang sesuai sebelum integrasi penuh._
