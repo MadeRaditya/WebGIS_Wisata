@@ -28,6 +28,11 @@ phpunit.xml
 Thumbs.db
 .DS_Store
 
+# Agent files
+.agents/
+skills/
+skills-lock.json
+
 # Temporary / Scratch Files
 test_supabase.php
 /database_setup.sql
