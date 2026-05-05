@@ -9,8 +9,46 @@ class SupabaseClient
 
     public function __construct()
     {
-        $this->url = rtrim(env('SUPABASE_URL', ''), '/');
-        $this->apiKey = env('SUPABASE_ANON_KEY', '');
+        $url = env('SUPABASE_URL');
+        if (empty($url)) $url = getenv('SUPABASE_URL');
+        if (empty($url)) $url = $_ENV['SUPABASE_URL'] ?? 'https://ytmblikoqxfffbmgoxcp.supabase.co';
+        
+        // Coba gunakan SERVICE ROLE KEY terlebih dahulu (untuk bypass RLS saat CRUD)
+        $key = env('SUPABASE_SERVICE_ROLE_KEY');
+        if (empty($key)) $key = getenv('SUPABASE_SERVICE_ROLE_KEY');
+        if (empty($key)) $key = $_ENV['SUPABASE_SERVICE_ROLE_KEY'] ?? '';
+        
+        if (empty($key)) $key = env('SERVICE_ROLE_KEY');
+        if (empty($key)) $key = getenv('SERVICE_ROLE_KEY');
+        if (empty($key)) $key = $_ENV['SERVICE_ROLE_KEY'] ?? '';
+
+        // Fallback: Parse .env file manually if keys are still empty
+        if (empty($url) || empty($key)) {
+            $envPath = FCPATH . '../.env';
+            if (file_exists($envPath)) {
+                $lines = file($envPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+                foreach ($lines as $line) {
+                    if (strpos(trim($line), '#') === 0) continue;
+                    $parts = explode('=', $line, 2);
+                    if (count($parts) == 2) {
+                        $k = trim($parts[0]);
+                        $v = trim($parts[1], " \t\n\r\0\x0B\"'");
+                        if ($k === 'SUPABASE_URL' && empty($url)) $url = $v;
+                        if (($k === 'SUPABASE_SERVICE_ROLE_KEY' || $k === 'SERVICE_ROLE_KEY') && empty($key)) $key = $v;
+                    }
+                }
+            }
+        }
+
+        // Jika tidak ada SERVICE ROLE KEY, fallback ke ANON KEY
+        if (empty($key)) {
+            $key = env('SUPABASE_ANON_KEY');
+            if (empty($key)) $key = getenv('SUPABASE_ANON_KEY');
+            if (empty($key)) $key = $_ENV['SUPABASE_ANON_KEY'] ?? 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl0bWJsaWtvcXhmZmZibWdveGNwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc4OTE4ODIsImV4cCI6MjA5MzQ2Nzg4Mn0.qihNGvO33MbVy3lK-4uUQSwlLR0aj9kJQxkp2xj8wjg';
+        }
+
+        $this->url = rtrim($url, '/');
+        $this->apiKey = $key;
     }
 
     private function request(string $method, string $endpoint, array $queryParams = [], $body = null, array $extraHeaders = []): array
