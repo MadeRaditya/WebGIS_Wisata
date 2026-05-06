@@ -39,9 +39,9 @@
                     <div class="mb-5">
                         <label class="form-label fw-bold">File Foto</label>
                         <div class="p-4 rounded-4 bg-light text-center border-2 border-dashed border-secondary-subtle">
-                            <?php if($isEdit && !empty($galeri['url_gambar'])): ?>
+                            <?php if($isEdit): ?>
                                 <div class="mb-4">
-                                    <img src="<?= (strpos($galeri['url_gambar'], 'http') === 0) ? esc($galeri['url_gambar']) : base_url('assets/uploads/'.$galeri['url_gambar']) ?>" class="rounded-4 shadow-sm" style="max-height: 250px; width: 100%; object-fit: cover;" alt="">
+                                    <img src="<?= get_wisata_image($galeri['url_gambar']) ?>" class="rounded-4 shadow-sm" style="max-height: 250px; width: 100%; object-fit: cover;" alt="">
                                 </div>
                             <?php endif; ?>
                             

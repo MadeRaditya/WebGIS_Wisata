@@ -209,8 +209,7 @@ class SupabaseClient
         if (file_exists($tmpConfig)) unlink($tmpConfig);
         if ($tmpBody && file_exists($tmpBody)) unlink($tmpBody);
 
-        error_log("Supabase CLI [$method] to $url. Response: " . $response);
-        // error_log("Supabase CLI Raw Response: " . $response);
+
 
         if ($response === null) {
             error_log('Supabase CLI curl -K failed completely.');

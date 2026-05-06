@@ -1,10 +1,6 @@
 <section class="detail-hero" id="detail-hero">
     <div class="detail-hero-bg">
-        <?php if (!empty($wisata['gambar_utama'])): ?>
-            <img src="<?= (strpos($wisata['gambar_utama'], 'http') === 0) ? esc($wisata['gambar_utama']) : base_url('assets/uploads/' . esc($wisata['gambar_utama'])) ?>" alt="<?= esc($wisata['nama']) ?>" onerror="this.src='https://images.unsplash.com/photo-1506929562872-bb421503ef21?w=1200&h=600&fit=crop'">
-        <?php else: ?>
-            <img src="https://images.unsplash.com/photo-1506929562872-bb421503ef21?w=1200&h=600&fit=crop" alt="<?= esc($wisata['nama']) ?>">
-        <?php endif; ?>
+        <img src="<?= get_wisata_image($wisata['gambar_utama']) ?>" alt="<?= esc($wisata['nama']) ?>">
         <div class="detail-hero-overlay"></div>
     </div>
     <div class="detail-hero-content">
@@ -91,7 +87,7 @@
                         <div class="galeri-grid">
                             <?php foreach ($galeri as $foto): ?>
                                 <div class="galeri-item" id="galeri-item-<?= $foto['id'] ?>">
-                                    <img src="<?= (strpos($foto['url_gambar'], 'http') === 0) ? esc($foto['url_gambar']) : base_url('assets/uploads/' . esc($foto['url_gambar'])) ?>" alt="<?= esc($foto['caption'] ?? '') ?>" loading="lazy" onerror="this.src='https://images.unsplash.com/photo-1506929562872-bb421503ef21?w=400&h=300&fit=crop'">
+                                    <img src="<?= get_wisata_image($foto['url_gambar']) ?>" alt="<?= esc($foto['caption'] ?? '') ?>" loading="lazy">
                                     <?php if (!empty($foto['caption'])): ?>
                                         <div class="galeri-caption"><?= esc($foto['caption']) ?></div>
                                     <?php endif; ?>

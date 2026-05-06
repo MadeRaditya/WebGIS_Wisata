@@ -70,9 +70,9 @@
 
                     <div class="p-4 rounded-4 bg-light">
                         <label class="form-label fw-bold">Gambar Utama</label>
-                        <?php if($isEdit && !empty($wisata['gambar_utama'])): ?>
+                        <?php if($isEdit): ?>
                             <div class="mb-3">
-                                <img src="<?= (strpos($wisata['gambar_utama'], 'http') === 0) ? esc($wisata['gambar_utama']) : base_url('assets/uploads/'.$wisata['gambar_utama']) ?>" class="img-fluid rounded-3 shadow-sm border border-white" alt="">
+                                <img src="<?= get_wisata_image($wisata['gambar_utama']) ?>" class="img-fluid rounded-3 shadow-sm border border-white" alt="">
                             </div>
                         <?php endif; ?>
                         <div class="input-group">

@@ -41,7 +41,7 @@
                         <tr>
                             <td class="text-center text-muted fw-bold"><?= $no++ ?></td>
                             <td>
-                                <img src="<?= (strpos($g['url_gambar'], 'http') === 0) ? esc($g['url_gambar']) : base_url('assets/uploads/'.$g['url_gambar']) ?>" class="rounded-3 shadow-sm border" width="150" height="100" style="object-fit: cover;" alt="">
+                                <img src="<?= get_wisata_image($g['url_gambar']) ?>" class="rounded-3 shadow-sm border" width="150" height="100" style="object-fit: cover;" alt="">
                             </td>
                             <td>
                                 <div class="fw-medium text-dark"><?= esc($g['caption']) ?></div>
