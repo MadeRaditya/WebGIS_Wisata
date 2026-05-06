@@ -49,8 +49,20 @@ class WisataController extends BaseController
         $gambar = $this->request->getFile('gambar_utama');
         if ($gambar && $gambar->isValid() && !$gambar->hasMoved()) {
             $newName = $gambar->getRandomName();
-            $gambar->move(FCPATH . 'assets/uploads', $newName);
-            $data['gambar_utama'] = $newName;
+            
+            $supabase = new \App\Libraries\SupabaseClient();
+            $storage = $supabase->storage('wisata');
+            
+            // Upload to Supabase
+            $uploadPath = 'utama/' . $newName;
+            $res = $storage->upload($uploadPath, $gambar->getTempName(), $gambar->getMimeType());
+            
+            if (!empty($res) && !isset($res['error']) && !isset($res['statusCode'])) {
+                $data['gambar_utama'] = $storage->getPublicUrl($uploadPath);
+            } else {
+                $errMsg = $res['message'] ?? json_encode($res);
+                return redirect()->back()->withInput()->with('error', 'Gagal upload ke Supabase: ' . $errMsg);
+            }
         }
 
         $this->wisataModel->insert($data);
@@ -73,6 +85,7 @@ class WisataController extends BaseController
 
     public function update($id)
     {
+        error_log("Update Wisata ID $id POST Data: " . json_encode($_POST));
         $data = [
             'kategori_id' => $this->request->getPost('kategori_id'),
             'nama' => $this->request->getPost('nama'),
@@ -86,8 +99,20 @@ class WisataController extends BaseController
         $gambar = $this->request->getFile('gambar_utama');
         if ($gambar && $gambar->isValid() && !$gambar->hasMoved()) {
             $newName = $gambar->getRandomName();
-            $gambar->move(FCPATH . 'assets/uploads', $newName);
-            $data['gambar_utama'] = $newName;
+            
+            $supabase = new \App\Libraries\SupabaseClient();
+            $storage = $supabase->storage('wisata');
+            
+            // Upload to Supabase
+            $uploadPath = 'utama/' . $newName;
+            $res = $storage->upload($uploadPath, $gambar->getTempName(), $gambar->getMimeType());
+            
+            if (!empty($res) && !isset($res['error']) && !isset($res['statusCode'])) {
+                $data['gambar_utama'] = $storage->getPublicUrl($uploadPath);
+            } else {
+                $errMsg = $res['message'] ?? json_encode($res);
+                return redirect()->back()->withInput()->with('error', 'Gagal upload ke Supabase: ' . $errMsg);
+            }
         }
 
         $this->wisataModel->update($id, $data);

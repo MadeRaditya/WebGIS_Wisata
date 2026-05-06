@@ -44,11 +44,21 @@ class SupabaseClient
         if (empty($key)) {
             $key = env('SUPABASE_ANON_KEY');
             if (empty($key)) $key = getenv('SUPABASE_ANON_KEY');
-            if (empty($key)) $key = $_ENV['SUPABASE_ANON_KEY'] ?? 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl0bWJsaWtvcXhmZmZibWdveGNwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc4OTE4ODIsImV4cCI6MjA5MzQ2Nzg4Mn0.qihNGvO33MbVy3lK-4uUQSwlLR0aj9kJQxkp2xj8wjg';
+            if (empty($key)) $key = $_ENV['SUPABASE_ANON_KEY'] ?? '';
         }
 
         $this->url = rtrim($url, '/');
         $this->apiKey = $key;
+    }
+
+    public function getUrl(): string
+    {
+        return $this->url;
+    }
+
+    public function getApiKey(): string
+    {
+        return $this->apiKey;
     }
 
     private function request(string $method, string $endpoint, array $queryParams = [], $body = null, array $extraHeaders = []): array
@@ -58,6 +68,9 @@ class SupabaseClient
         if (!empty($queryParams)) {
             $url .= '?' . http_build_query($queryParams);
         }
+        
+        // Use error_log instead of log_message for better compatibility
+        // error_log('Supabase Req URL: ' . $url);
 
         $headers = [
             'apikey: ' . $this->apiKey,
@@ -115,7 +128,7 @@ class SupabaseClient
         \curl_close($ch);
 
         if ($error) {
-            \log_message('debug', 'Supabase cURL extension failed: ' . $error);
+            error_log('Supabase cURL extension failed: ' . $error);
             return [];
         }
 
@@ -147,7 +160,7 @@ class SupabaseClient
         $response = @file_get_contents($url, false, $context);
 
         if ($response === false) {
-            \log_message('debug', 'Supabase stream failed for: ' . $url);
+            error_log('Supabase stream failed for: ' . $url);
             return [];
         }
 
@@ -165,35 +178,52 @@ class SupabaseClient
 
     private function requestWithCli(string $method, string $url, array $headers, $body = null): array
     {
-        $cmd = 'curl.exe -s -X ' . strtoupper($method);
+        $configContent = "insecure\n"; // Bypasses SSL verification issues
+        $configContent .= "silent\n";
+        $configContent .= "request = " . strtoupper($method) . "\n";
+        $configContent .= "url = \"" . str_replace('"', '\"', $url) . "\"\n";
         
         foreach ($headers as $h) {
-            $cmd .= ' -H "' . str_replace('"', '\"', $h) . '"';
+            $configContent .= "header = \"" . str_replace('"', '\"', $h) . "\"\n";
         }
 
-        if ($body !== null && in_array(strtoupper($method), ['POST', 'PATCH', 'PUT'])) {
-            $jsonBody = json_encode($body);
-            $tmpFile = tempnam(sys_get_temp_dir(), 'supa');
-            file_put_contents($tmpFile, $jsonBody);
-            $cmd .= ' -d "@' . $tmpFile . '"';
-        }
+        $tmpConfig = tempnam(sys_get_temp_dir(), 'supac');
+        file_put_contents($tmpConfig, $configContent);
 
-        $cmd .= ' "' . $url . '"';
+        $cmd = 'curl.exe -K ' . escapeshellarg($tmpConfig) . ' 2>&1';
         
+        $tmpBody = null;
+        if ($body !== null) {
+            $tmpBody = tempnam(sys_get_temp_dir(), 'supab');
+            if (is_array($body)) {
+                file_put_contents($tmpBody, json_encode($body));
+                $cmd .= ' -d "@' . $tmpBody . '"';
+            } else {
+                // For binary data (like file uploads)
+                file_put_contents($tmpBody, $body);
+                $cmd .= ' --data-binary "@' . $tmpBody . '"';
+            }
+        }
+
         $response = shell_exec($cmd);
-        
-        if (isset($tmpFile) && file_exists($tmpFile)) {
-            unlink($tmpFile);
-        }
+        if (file_exists($tmpConfig)) unlink($tmpConfig);
+        if ($tmpBody && file_exists($tmpBody)) unlink($tmpBody);
+
+
 
         if ($response === null) {
-            \log_message('error', 'Supabase CLI curl failed completely.');
+            error_log('Supabase CLI curl -K failed completely.');
             return [];
         }
 
-        // CLI curl output doesn't give HTTP code easily without extra flags, 
-        // but Supabase usually returns JSON on success or error.
-        return json_decode($response, true) ?? [];
+        $decoded = json_decode($response, true);
+        if ($decoded === null && !empty($response)) {
+            // If response is not JSON, it might be a curl error message
+            error_log('Supabase CLI curl error: ' . $response);
+            return [];
+        }
+
+        return $decoded ?? [];
     }
 
     private function handleResponse(string $response, int $httpCode): array
@@ -201,7 +231,7 @@ class SupabaseClient
         $decoded = json_decode($response, true);
 
         if ($httpCode >= 400) {
-            \log_message('error', 'Supabase API error [' . $httpCode . ']: ' . $response);
+            error_log('Supabase API error [' . $httpCode . ']: ' . $response);
             return [];
         }
 
@@ -216,6 +246,55 @@ class SupabaseClient
     public function executeQuery(string $method, string $table, array $queryParams = [], $body = null, array $extraHeaders = []): array
     {
         return $this->request($method, $table, $queryParams, $body, $extraHeaders);
+    }
+
+    public function executeStorageRequest(string $method, string $url, array $extraHeaders = [], $body = null): array
+    {
+        $headers = [
+            'apikey: ' . $this->apiKey,
+            'Authorization: Bearer ' . $this->apiKey,
+        ];
+
+        $headers = array_merge($headers, $extraHeaders);
+
+        return $this->requestWithCli($method, $url, $headers, $body);
+    }
+
+    public function storage(string $bucket): SupabaseStorage
+    {
+        return new SupabaseStorage($this, $bucket);
+    }
+}
+
+class SupabaseStorage
+{
+    private SupabaseClient $client;
+    private string $bucket;
+
+    public function __construct(SupabaseClient $client, string $bucket)
+    {
+        $this->client = $client;
+        $this->bucket = $bucket;
+    }
+
+    public function upload(string $path, string $filePath, string $contentType = 'image/jpeg'): array
+    {
+        $binaryData = file_get_contents($filePath);
+        $endpoint = '/storage/v1/object/' . $this->bucket . '/' . ltrim($path, '/');
+        
+        $url = $this->client->getUrl() . $endpoint;
+        
+        $headers = [
+            'Content-Type: ' . $contentType,
+            'x-upsert: true'
+        ];
+
+        return $this->client->executeStorageRequest('POST', $url, $headers, $binaryData);
+    }
+
+    public function getPublicUrl(string $path): string
+    {
+        return $this->client->getUrl() . '/storage/v1/object/public/' . $this->bucket . '/' . ltrim($path, '/');
     }
 }
 
@@ -243,19 +322,19 @@ class SupabaseQuery
 
     public function eq(string $column, $value): self
     {
-        $this->filters[] = $column . '=eq.' . urlencode($value);
+        $this->filters[] = $column . '=eq.' . $value;
         return $this;
     }
 
     public function in(string $column, array $values): self
     {
-        $this->filters[] = $column . '=in.(' . implode(',', array_map('urlencode', $values)) . ')';
+        $this->filters[] = $column . '=in.(' . implode(',', $values) . ')';
         return $this;
     }
 
     public function ilike(string $column, string $pattern): self
     {
-        $this->filters[] = $column . '=ilike.' . urlencode($pattern);
+        $this->filters[] = $column . '=ilike.' . $pattern;
         return $this;
     }
 

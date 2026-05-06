@@ -45,13 +45,25 @@ class GaleriController extends BaseController
         $gambar = $this->request->getFile('url_gambar');
         if ($gambar && $gambar->isValid() && !$gambar->hasMoved()) {
             $newName = $gambar->getRandomName();
-            $gambar->move(FCPATH . 'assets/uploads', $newName);
-            $data['url_gambar'] = $newName;
+            
+            $supabase = new \App\Libraries\SupabaseClient();
+            $storage = $supabase->storage('wisata');
+            
+            // Upload to Supabase
+            $uploadPath = 'galeri/' . $newName;
+            $res = $storage->upload($uploadPath, $gambar->getTempName(), $gambar->getMimeType());
+            
+            if (!empty($res) && !isset($res['error']) && !isset($res['statusCode'])) {
+                $data['url_gambar'] = $storage->getPublicUrl($uploadPath);
+                $this->galeriModel->insert($data);
+                return redirect()->to('admin/galeri')->with('success', 'Foto galeri berhasil ditambahkan.');
+            } else {
+                $errMsg = $res['message'] ?? json_encode($res);
+                return redirect()->back()->withInput()->with('error', 'Gagal upload ke Supabase: ' . $errMsg);
+            }
         }
 
-        $this->galeriModel->insert($data);
-
-        return redirect()->to('admin/galeri')->with('success', 'Foto galeri berhasil ditambahkan.');
+        return redirect()->back()->withInput()->with('error', 'Pilih file gambar terlebih dahulu.');
     }
 
     public function edit($id)
@@ -77,8 +89,20 @@ class GaleriController extends BaseController
         $gambar = $this->request->getFile('url_gambar');
         if ($gambar && $gambar->isValid() && !$gambar->hasMoved()) {
             $newName = $gambar->getRandomName();
-            $gambar->move(FCPATH . 'assets/uploads', $newName);
-            $data['url_gambar'] = $newName;
+            
+            $supabase = new \App\Libraries\SupabaseClient();
+            $storage = $supabase->storage('wisata');
+            
+            // Upload to Supabase
+            $uploadPath = 'galeri/' . $newName;
+            $res = $storage->upload($uploadPath, $gambar->getTempName(), $gambar->getMimeType());
+            
+            if (!empty($res) && !isset($res['error']) && !isset($res['statusCode'])) {
+                $data['url_gambar'] = $storage->getPublicUrl($uploadPath);
+            } else {
+                $errMsg = $res['message'] ?? json_encode($res);
+                return redirect()->back()->withInput()->with('error', 'Gagal upload ke Supabase: ' . $errMsg);
+            }
         }
 
         $this->galeriModel->update($id, $data);
