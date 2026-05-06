@@ -138,7 +138,7 @@
                     <article class="wisata-card" id="wisata-card-<?= $item['id'] ?>" data-id="<?= $item['id'] ?>" data-lat="<?= $item['latitude'] ?>" data-lng="<?= $item['longitude'] ?>">
                         <div class="card-image">
                             <?php if (!empty($item['gambar_utama'])): ?>
-                                <img src="<?= base_url('assets/uploads/' . esc($item['gambar_utama'])) ?>" alt="<?= esc($item['nama']) ?>" loading="lazy" onerror="this.src='https://images.unsplash.com/photo-1506929562872-bb421503ef21?w=400&h=300&fit=crop'">
+                                <img src="<?= (strpos($item['gambar_utama'], 'http') === 0) ? esc($item['gambar_utama']) : base_url('assets/uploads/' . esc($item['gambar_utama'])) ?>" alt="<?= esc($item['nama']) ?>" loading="lazy" onerror="this.src='https://images.unsplash.com/photo-1506929562872-bb421503ef21?w=400&h=300&fit=crop'">
                             <?php else: ?>
                                 <img src="https://images.unsplash.com/photo-1506929562872-bb421503ef21?w=400&h=300&fit=crop" alt="<?= esc($item['nama']) ?>" loading="lazy">
                             <?php endif; ?>

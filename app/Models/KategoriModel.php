@@ -43,4 +43,19 @@ class KategoriModel
 
         return !empty($results) ? $results[0] : null;
     }
+
+    public function insert(array $data): array
+    {
+        return $this->supabase->from($this->table)->insert($data);
+    }
+
+    public function update(int $id, array $data): array
+    {
+        return $this->supabase->from($this->table)->eq('id', $id)->update($data);
+    }
+
+    public function delete(int $id): array
+    {
+        return $this->supabase->from($this->table)->eq('id', $id)->delete();
+    }
 }
