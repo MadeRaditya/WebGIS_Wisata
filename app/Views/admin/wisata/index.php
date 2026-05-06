@@ -42,13 +42,7 @@
                             <td class="text-center text-muted fw-bold"><?= $no++ ?></td>
                             <td>
                                 <div class="d-flex align-items-center gap-3">
-                                    <?php if(!empty($w['gambar_utama'])): ?>
-                                        <img src="<?= base_url('assets/uploads/'.$w['gambar_utama']) ?>" class="rounded-3 shadow-sm" width="60" height="60" style="object-fit: cover;" alt="">
-                                    <?php else: ?>
-                                        <div class="rounded-3 bg-light d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
-                                            <i class="bi bi-image text-muted"></i>
-                                        </div>
-                                    <?php endif; ?>
+                                    <img src="<?= get_wisata_image($w['gambar_utama']) ?>" class="rounded-3 shadow-sm" width="60" height="60" style="object-fit: cover;" alt="">
                                     <div>
                                         <h6 class="fw-bold mb-1"><?= esc($w['nama']) ?></h6>
                                         <p class="small text-muted mb-0 text-truncate" style="max-width: 200px;"><?= esc($w['alamat']) ?></p>
