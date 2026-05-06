@@ -44,11 +44,21 @@ class SupabaseClient
         if (empty($key)) {
             $key = env('SUPABASE_ANON_KEY');
             if (empty($key)) $key = getenv('SUPABASE_ANON_KEY');
-            if (empty($key)) $key = $_ENV['SUPABASE_ANON_KEY'] ?? 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl0bWJsaWtvcXhmZmZibWdveGNwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc4OTE4ODIsImV4cCI6MjA5MzQ2Nzg4Mn0.qihNGvO33MbVy3lK-4uUQSwlLR0aj9kJQxkp2xj8wjg';
+            if (empty($key)) $key = $_ENV['SUPABASE_ANON_KEY'] ?? '';
         }
 
         $this->url = rtrim($url, '/');
         $this->apiKey = $key;
+    }
+
+    public function getUrl(): string
+    {
+        return $this->url;
+    }
+
+    public function getApiKey(): string
+    {
+        return $this->apiKey;
     }
 
     private function request(string $method, string $endpoint, array $queryParams = [], $body = null, array $extraHeaders = []): array
@@ -59,7 +69,8 @@ class SupabaseClient
             $url .= '?' . http_build_query($queryParams);
         }
         
-        \log_message('debug', 'Supabase Req URL: ' . $url);
+        // Use error_log instead of log_message for better compatibility
+        // error_log('Supabase Req URL: ' . $url);
 
         $headers = [
             'apikey: ' . $this->apiKey,
@@ -117,7 +128,7 @@ class SupabaseClient
         \curl_close($ch);
 
         if ($error) {
-            \log_message('debug', 'Supabase cURL extension failed: ' . $error);
+            error_log('Supabase cURL extension failed: ' . $error);
             return [];
         }
 
@@ -149,7 +160,7 @@ class SupabaseClient
         $response = @file_get_contents($url, false, $context);
 
         if ($response === false) {
-            \log_message('debug', 'Supabase stream failed for: ' . $url);
+            error_log('Supabase stream failed for: ' . $url);
             return [];
         }
 
@@ -179,8 +190,7 @@ class SupabaseClient
         $tmpConfig = tempnam(sys_get_temp_dir(), 'supac');
         file_put_contents($tmpConfig, $configContent);
 
-        $cmd = 'curl.exe -K ' . escapeshellarg($tmpConfig);
-        $cmd .= ' ' . escapeshellarg($url) . ' 2>&1';
+        $cmd = 'curl.exe -K ' . escapeshellarg($tmpConfig) . ' 2>&1';
         
         $tmpBody = null;
         if ($body !== null) {
@@ -196,19 +206,21 @@ class SupabaseClient
         }
 
         $response = shell_exec($cmd);
-        
         if (file_exists($tmpConfig)) unlink($tmpConfig);
         if ($tmpBody && file_exists($tmpBody)) unlink($tmpBody);
 
+        error_log("Supabase CLI [$method] to $url. Response: " . $response);
+        // error_log("Supabase CLI Raw Response: " . $response);
+
         if ($response === null) {
-            \log_message('error', 'Supabase CLI curl -K failed completely.');
+            error_log('Supabase CLI curl -K failed completely.');
             return [];
         }
 
         $decoded = json_decode($response, true);
         if ($decoded === null && !empty($response)) {
             // If response is not JSON, it might be a curl error message
-            \log_message('error', 'Supabase CLI curl error: ' . $response);
+            error_log('Supabase CLI curl error: ' . $response);
             return [];
         }
 
@@ -220,7 +232,7 @@ class SupabaseClient
         $decoded = json_decode($response, true);
 
         if ($httpCode >= 400) {
-            \log_message('error', 'Supabase API error [' . $httpCode . ']: ' . $response);
+            error_log('Supabase API error [' . $httpCode . ']: ' . $response);
             return [];
         }
 
@@ -271,11 +283,11 @@ class SupabaseStorage
         $binaryData = file_get_contents($filePath);
         $endpoint = '/storage/v1/object/' . $this->bucket . '/' . ltrim($path, '/');
         
-        // Manual construction of storage URL because request() adds /rest/v1/
-        $url = rtrim(env('SUPABASE_URL'), '/') . $endpoint;
+        $url = $this->client->getUrl() . $endpoint;
         
         $headers = [
-            'Content-Type: ' . $contentType
+            'Content-Type: ' . $contentType,
+            'x-upsert: true'
         ];
 
         return $this->client->executeStorageRequest('POST', $url, $headers, $binaryData);
@@ -283,7 +295,7 @@ class SupabaseStorage
 
     public function getPublicUrl(string $path): string
     {
-        return rtrim(env('SUPABASE_URL'), '/') . '/storage/v1/object/public/' . $this->bucket . '/' . ltrim($path, '/');
+        return $this->client->getUrl() . '/storage/v1/object/public/' . $this->bucket . '/' . ltrim($path, '/');
     }
 }
 

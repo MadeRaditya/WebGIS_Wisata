@@ -57,8 +57,11 @@ class WisataController extends BaseController
             $uploadPath = 'utama/' . $newName;
             $res = $storage->upload($uploadPath, $gambar->getTempName(), $gambar->getMimeType());
             
-            if (!empty($res)) {
+            if (!empty($res) && !isset($res['error']) && !isset($res['statusCode'])) {
                 $data['gambar_utama'] = $storage->getPublicUrl($uploadPath);
+            } else {
+                $errMsg = $res['message'] ?? json_encode($res);
+                return redirect()->back()->withInput()->with('error', 'Gagal upload ke Supabase: ' . $errMsg);
             }
         }
 
@@ -82,6 +85,7 @@ class WisataController extends BaseController
 
     public function update($id)
     {
+        error_log("Update Wisata ID $id POST Data: " . json_encode($_POST));
         $data = [
             'kategori_id' => $this->request->getPost('kategori_id'),
             'nama' => $this->request->getPost('nama'),
@@ -103,8 +107,11 @@ class WisataController extends BaseController
             $uploadPath = 'utama/' . $newName;
             $res = $storage->upload($uploadPath, $gambar->getTempName(), $gambar->getMimeType());
             
-            if (!empty($res)) {
+            if (!empty($res) && !isset($res['error']) && !isset($res['statusCode'])) {
                 $data['gambar_utama'] = $storage->getPublicUrl($uploadPath);
+            } else {
+                $errMsg = $res['message'] ?? json_encode($res);
+                return redirect()->back()->withInput()->with('error', 'Gagal upload ke Supabase: ' . $errMsg);
             }
         }
 
