@@ -49,8 +49,17 @@ class WisataController extends BaseController
         $gambar = $this->request->getFile('gambar_utama');
         if ($gambar && $gambar->isValid() && !$gambar->hasMoved()) {
             $newName = $gambar->getRandomName();
-            $gambar->move(FCPATH . 'assets/uploads', $newName);
-            $data['gambar_utama'] = $newName;
+            
+            $supabase = new \App\Libraries\SupabaseClient();
+            $storage = $supabase->storage('wisata');
+            
+            // Upload to Supabase
+            $uploadPath = 'utama/' . $newName;
+            $res = $storage->upload($uploadPath, $gambar->getTempName(), $gambar->getMimeType());
+            
+            if (!empty($res)) {
+                $data['gambar_utama'] = $storage->getPublicUrl($uploadPath);
+            }
         }
 
         $this->wisataModel->insert($data);
@@ -86,8 +95,17 @@ class WisataController extends BaseController
         $gambar = $this->request->getFile('gambar_utama');
         if ($gambar && $gambar->isValid() && !$gambar->hasMoved()) {
             $newName = $gambar->getRandomName();
-            $gambar->move(FCPATH . 'assets/uploads', $newName);
-            $data['gambar_utama'] = $newName;
+            
+            $supabase = new \App\Libraries\SupabaseClient();
+            $storage = $supabase->storage('wisata');
+            
+            // Upload to Supabase
+            $uploadPath = 'utama/' . $newName;
+            $res = $storage->upload($uploadPath, $gambar->getTempName(), $gambar->getMimeType());
+            
+            if (!empty($res)) {
+                $data['gambar_utama'] = $storage->getPublicUrl($uploadPath);
+            }
         }
 
         $this->wisataModel->update($id, $data);

@@ -45,8 +45,17 @@ class GaleriController extends BaseController
         $gambar = $this->request->getFile('url_gambar');
         if ($gambar && $gambar->isValid() && !$gambar->hasMoved()) {
             $newName = $gambar->getRandomName();
-            $gambar->move(FCPATH . 'assets/uploads', $newName);
-            $data['url_gambar'] = $newName;
+            
+            $supabase = new \App\Libraries\SupabaseClient();
+            $storage = $supabase->storage('wisata');
+            
+            // Upload to Supabase
+            $uploadPath = 'galeri/' . $newName;
+            $res = $storage->upload($uploadPath, $gambar->getTempName(), $gambar->getMimeType());
+            
+            if (!empty($res)) {
+                $data['url_gambar'] = $storage->getPublicUrl($uploadPath);
+            }
         }
 
         $this->galeriModel->insert($data);
@@ -77,8 +86,17 @@ class GaleriController extends BaseController
         $gambar = $this->request->getFile('url_gambar');
         if ($gambar && $gambar->isValid() && !$gambar->hasMoved()) {
             $newName = $gambar->getRandomName();
-            $gambar->move(FCPATH . 'assets/uploads', $newName);
-            $data['url_gambar'] = $newName;
+            
+            $supabase = new \App\Libraries\SupabaseClient();
+            $storage = $supabase->storage('wisata');
+            
+            // Upload to Supabase
+            $uploadPath = 'galeri/' . $newName;
+            $res = $storage->upload($uploadPath, $gambar->getTempName(), $gambar->getMimeType());
+            
+            if (!empty($res)) {
+                $data['url_gambar'] = $storage->getPublicUrl($uploadPath);
+            }
         }
 
         $this->galeriModel->update($id, $data);

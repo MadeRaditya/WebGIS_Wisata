@@ -43,7 +43,7 @@
                             <td>
                                 <div class="d-flex align-items-center gap-3">
                                     <?php if(!empty($w['gambar_utama'])): ?>
-                                        <img src="<?= base_url('assets/uploads/'.$w['gambar_utama']) ?>" class="rounded-3 shadow-sm" width="60" height="60" style="object-fit: cover;" alt="">
+                                        <img src="<?= (strpos($w['gambar_utama'], 'http') === 0) ? esc($w['gambar_utama']) : base_url('assets/uploads/'.$w['gambar_utama']) ?>" class="rounded-3 shadow-sm" width="60" height="60" style="object-fit: cover;" alt="">
                                     <?php else: ?>
                                         <div class="rounded-3 bg-light d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
                                             <i class="bi bi-image text-muted"></i>

@@ -72,7 +72,7 @@
                         <label class="form-label fw-bold">Gambar Utama</label>
                         <?php if($isEdit && !empty($wisata['gambar_utama'])): ?>
                             <div class="mb-3">
-                                <img src="<?= base_url('assets/uploads/'.$wisata['gambar_utama']) ?>" class="img-fluid rounded-3 shadow-sm border border-white" alt="">
+                                <img src="<?= (strpos($wisata['gambar_utama'], 'http') === 0) ? esc($wisata['gambar_utama']) : base_url('assets/uploads/'.$wisata['gambar_utama']) ?>" class="img-fluid rounded-3 shadow-sm border border-white" alt="">
                             </div>
                         <?php endif; ?>
                         <div class="input-group">
